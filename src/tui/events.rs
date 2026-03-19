@@ -1,0 +1,78 @@
+use std::time::Duration;
+
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use futures::StreamExt;
+use ratatui::Terminal;
+
+use crate::tui::app::App;
+use crate::tui::ui;
+
+pub async fn run(
+    app: &mut App,
+    terminal: &mut Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
+    let mut reader = crossterm::event::EventStream::new();
+    let mut interval = tokio::time::interval(Duration::from_millis(500));
+
+    loop {
+        terminal.draw(|f| ui::draw(f, app))?;
+
+        tokio::select! {
+            _ = interval.tick() => {
+                app.tick += 1;
+                app.tick_errors();
+                app.refresh_state().await;
+            }
+            Some(Ok(event)) = reader.next() => {
+                handle_event(app, event).await;
+            }
+        }
+
+        if app.should_quit {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_event(app: &mut App, event: Event) {
+    if let Event::Key(key) = event {
+        if key.kind == KeyEventKind::Press {
+            handle_key(app, key).await;
+        }
+    }
+}
+
+async fn handle_key(app: &mut App, key: KeyEvent) {
+    match key.code {
+        KeyCode::Char('q') | KeyCode::Esc => {
+            app.should_quit = true;
+        }
+        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            app.should_quit = true;
+        }
+        KeyCode::Up | KeyCode::Char('k') => {
+            app.adjust_target(1.0).await;
+        }
+        KeyCode::Down | KeyCode::Char('j') => {
+            app.adjust_target(-1.0).await;
+        }
+        KeyCode::Char('K') => {
+            app.adjust_target(5.0).await;
+        }
+        KeyCode::Char('J') => {
+            app.adjust_target(-5.0).await;
+        }
+        KeyCode::Char('h') | KeyCode::Char('H') => {
+            app.toggle_heater().await;
+        }
+        KeyCode::Char('p') | KeyCode::Char('P') => {
+            app.toggle_pump().await;
+        }
+        KeyCode::Char('r') | KeyCode::Char('R') => {
+            app.refresh_state().await;
+        }
+        _ => {}
+    }
+}
