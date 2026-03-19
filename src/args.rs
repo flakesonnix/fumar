@@ -15,6 +15,10 @@ pub struct Cli {
     #[arg(long)]
     pub cli: bool,
 
+    /// Force GUI mode (requires 'gui' feature)
+    #[arg(long)]
+    pub gui: bool,
+
     /// BLE scan timeout in seconds
     #[arg(long, default_value = "10")]
     pub scan_timeout: u64,

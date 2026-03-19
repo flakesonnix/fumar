@@ -63,16 +63,14 @@ impl App {
 
     pub async fn adjust_target(&mut self, delta: f32) {
         let raw = (self.state.target_temp.unwrap_or(180.0) + delta).clamp(40.0, 230.0);
-        let new_temp = (raw / 2.0).round() * 2.0;
+        let new_temp = raw;
         match tokio::time::timeout(
             Duration::from_secs(5),
             self.device.set_target_temperature(new_temp),
         )
         .await
         {
-            Ok(Ok(_)) => {
-                // Don't update local state — wait for notification
-            }
+            Ok(Ok(_)) => {}
             Ok(Err(e)) => self.set_error(format!("Set temp failed: {e}")),
             Err(_) => self.set_error("Timeout setting temperature".to_string()),
         }
@@ -85,9 +83,7 @@ impl App {
             self.device.heater_on()
         };
         match tokio::time::timeout(Duration::from_secs(5), action).await {
-            Ok(Ok(_)) => {
-                // Don't update local state — wait for notification
-            }
+            Ok(Ok(_)) => {}
             Ok(Err(e)) => self.set_error(format!("Heater error: {e}")),
             Err(_) => self.set_error("Timeout toggling heater".to_string()),
         }
@@ -100,7 +96,9 @@ impl App {
             self.device.pump_on()
         };
         match tokio::time::timeout(Duration::from_secs(5), action).await {
-            Ok(Ok(_)) => {}
+            Ok(Ok(_)) => {
+                self.state.pump_on = !self.state.pump_on;
+            }
             Ok(Err(e)) => {
                 let msg = if e.to_string().contains("Unsupported operation") {
                     format!("Pump not supported on {}", self.device.device_model())
@@ -128,7 +126,8 @@ impl App {
         }
     }
 
-    pub fn is_crafty(&self) -> bool {
-        self.device.device_model() == DeviceModel::Crafty
+    pub fn is_volcano(&self) -> bool {
+        self.device.device_model() == DeviceModel::VolcanoHybrid
     }
+
 }

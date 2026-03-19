@@ -79,7 +79,7 @@ async fn handle_key(app: &mut App, key: KeyEvent) {
         KeyCode::Char('h') | KeyCode::Char('H') if !app.show_settings => {
             app.toggle_heater().await;
         }
-        KeyCode::Char('p') | KeyCode::Char('P') if !app.show_settings => {
+        KeyCode::Char('p') | KeyCode::Char('P') if !app.show_settings && app.is_volcano() => {
             app.toggle_pump().await;
         }
         KeyCode::Char('r') | KeyCode::Char('R') if !app.show_settings => {

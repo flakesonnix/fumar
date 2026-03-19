@@ -3,6 +3,9 @@ mod cli;
 mod scanner;
 mod tui;
 
+#[cfg(feature = "gui")]
+mod gui;
+
 use std::io::IsTerminal;
 use std::time::Duration;
 
@@ -34,8 +37,8 @@ impl Drop for TerminalGuard {
     }
 }
 
-fn init_tracing(tui_mode: bool) {
-    if tui_mode {
+fn init_tracing(gui_mode: bool) {
+    if gui_mode {
         let file = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
@@ -59,9 +62,23 @@ fn stdout_is_tty() -> bool {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::parse();
+
+    if args.gui {
+        init_tracing(true);
+        #[cfg(feature = "gui")]
+        {
+            gui::run_gui();
+            return Ok(());
+        }
+        #[cfg(not(feature = "gui"))]
+        {
+            anyhow::bail!("GUI mode requires: cargo install fumar --features gui");
+        }
+    }
+
     let tui_mode = args.tui || (!args.cli && args.command.is_none() && stdout_is_tty());
 
-    init_tracing(tui_mode);
+    init_tracing(false);
 
     let timeout = Duration::from_secs(args.scan_timeout);
     let device = scanner::scan_and_select(timeout).await?;

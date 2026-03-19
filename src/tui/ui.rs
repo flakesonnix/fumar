@@ -193,13 +193,7 @@ fn draw_status(f: &mut Frame, app: &App, area: Rect) {
     ]);
     f.render_widget(Paragraph::new(heater_line), left);
 
-    if app.is_crafty() {
-        let line = Line::from(vec![
-            Span::styled("Pump  ", Style::default().fg(rgb(245, 245, 245))),
-            Span::styled("\u{2014} N/A", Style::default().fg(rgb(85, 85, 85))),
-        ]);
-        f.render_widget(Paragraph::new(line), right);
-    } else {
+    if app.is_volcano() {
         let indicator = if app.state.pump_on {
             Span::styled("\u{25cf}", Style::default().fg(rgb(56, 201, 201)))
         } else {
@@ -234,9 +228,14 @@ fn draw_help(f: &mut Frame, app: &App, area: Rect) {
                 .fg(rgb(232, 64, 64))
                 .add_modifier(Modifier::BOLD),
         ))
-    } else {
+    } else if app.is_volcano() {
         Line::from(Span::styled(
             "  \u{2191}\u{2193} temp   H heater   P pump   R refresh   S settings   Q quit",
+            Style::default().fg(rgb(136, 136, 136)),
+        ))
+    } else {
+        Line::from(Span::styled(
+            "  \u{2191}\u{2193} temp   H heater   R refresh   S settings   Q quit",
             Style::default().fg(rgb(136, 136, 136)),
         ))
     };
