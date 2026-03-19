@@ -12,10 +12,6 @@ categories = ["command-line-utilities"]
 name = "fumar"
 path = "src/main.rs"
 
-[features]
-default = []
-emulator = []
-
 [dependencies]
 storz-rs = "0.1"
 tokio = { version = "1", features = ["full"] }
