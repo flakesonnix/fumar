@@ -21,7 +21,9 @@ pub async fn run(
             _ = interval.tick() => {
                 app.tick += 1;
                 app.tick_errors();
-                app.refresh_state().await;
+            }
+            Some(state) = app.state_stream.next() => {
+                app.apply_state(state);
             }
             Some(Ok(event)) = reader.next() => {
                 handle_event(app, event).await;

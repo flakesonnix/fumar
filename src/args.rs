@@ -15,6 +15,11 @@ pub struct Cli {
     #[arg(long)]
     pub cli: bool,
 
+    /// Use mock Venty emulator instead of real BLE
+    #[cfg(feature = "emulator")]
+    #[arg(long)]
+    pub mock: bool,
+
     /// BLE scan timeout in seconds
     #[arg(long, default_value = "10")]
     pub scan_timeout: u64,

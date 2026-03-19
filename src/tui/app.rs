@@ -1,11 +1,14 @@
+use std::pin::Pin;
 use std::time::{Duration, Instant};
 
+use futures::Stream;
 use storz_rs::{DeviceModel, DeviceState, VaporizerControl};
 use tracing::warn;
 
 pub struct App {
     pub device: Box<dyn VaporizerControl>,
     pub state: DeviceState,
+    pub state_stream: Pin<Box<dyn Stream<Item = DeviceState> + Send>>,
     pub should_quit: bool,
     pub last_error: Option<String>,
     pub error_clear_at: Option<Instant>,
@@ -14,16 +17,32 @@ pub struct App {
 
 impl App {
     pub async fn new(device: Box<dyn VaporizerControl>) -> Self {
+        let state_stream = match device.subscribe_state().await {
+            Ok(s) => s,
+            Err(e) => {
+                warn!("Failed to subscribe to state stream: {e}");
+                // Fallback: create an empty stream
+                Box::pin(futures::stream::pending())
+            }
+        };
+
         let mut app = Self {
             device,
             state: DeviceState::default(),
+            state_stream,
             should_quit: false,
             last_error: None,
             error_clear_at: None,
             tick: 0,
         };
+
+        // Initial state fetch via get_state
         app.refresh_state().await;
         app
+    }
+
+    pub fn apply_state(&mut self, state: DeviceState) {
+        self.state = state;
     }
 
     pub async fn refresh_state(&mut self) {
@@ -50,7 +69,7 @@ impl App {
         .await
         {
             Ok(Ok(_)) => {
-                self.state.target_temp = Some(new_temp);
+                // Don't update local state — wait for notification
             }
             Ok(Err(e)) => self.set_error(format!("Set temp failed: {e}")),
             Err(_) => self.set_error("Timeout setting temperature".to_string()),
@@ -65,7 +84,7 @@ impl App {
         };
         match tokio::time::timeout(Duration::from_secs(5), action).await {
             Ok(Ok(_)) => {
-                self.state.heater_on = !self.state.heater_on;
+                // Don't update local state — wait for notification
             }
             Ok(Err(e)) => self.set_error(format!("Heater error: {e}")),
             Err(_) => self.set_error("Timeout toggling heater".to_string()),
@@ -79,9 +98,7 @@ impl App {
             self.device.pump_on()
         };
         match tokio::time::timeout(Duration::from_secs(5), action).await {
-            Ok(Ok(_)) => {
-                self.state.pump_on = !self.state.pump_on;
-            }
+            Ok(Ok(_)) => {}
             Ok(Err(e)) => {
                 let msg = if e.to_string().contains("Unsupported operation") {
                     format!("Pump not supported on {}", self.device.device_model())
