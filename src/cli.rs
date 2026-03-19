@@ -28,7 +28,11 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
             println!("Current: {cur}  Target: {tgt}");
         }
         Commands::SetTemp { celsius } => {
-            let rounded = (celsius / 2.0).round() * 2.0;
+            if celsius.fract() != 0.0 {
+                eprintln!("Temperature must be a whole number (no decimals)");
+                std::process::exit(2);
+            }
+            let rounded = celsius.clamp(40.0, 230.0);
             timeout_ble(device.set_target_temperature(rounded))
                 .await
                 .context("Failed to set temperature")?;
