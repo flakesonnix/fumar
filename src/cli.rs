@@ -9,9 +9,12 @@ use crate::args::Commands;
 pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()> {
     match cmd {
         Commands::Temp => {
-            let current = timeout_ble(device.get_current_temperature()).await?;
+            let current = match timeout_ble(device.get_current_temperature()).await {
+                Ok(t) => format!("{t:.1}°C"),
+                Err(_) => "N/A".into(),
+            };
             let target = timeout_ble(device.get_target_temperature()).await?;
-            println!("Current: {current:.1}°C  Target: {target:.1}°C");
+            println!("Current: {current}  Target: {target:.1}°C");
         }
         Commands::SetTemp { celsius } => {
             timeout_ble(device.set_target_temperature(celsius))
