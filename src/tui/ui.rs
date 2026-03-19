@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Paragraph},
+    widgets::{Block, BorderType, Gauge, Paragraph},
 };
 
 use crate::tui::app::App;
@@ -28,14 +28,16 @@ pub fn draw(f: &mut Frame, app: &App) {
 
     let vertical = Layout::vertical([
         Constraint::Length(3),
-        Constraint::Min(7),
+        Constraint::Length(7),
+        Constraint::Length(3),
         Constraint::Length(3),
         Constraint::Length(3),
     ]);
-    let [title_area, temp_area, status_area, help_area] = vertical.areas(area);
+    let [title_area, temp_area, gauge_area, status_area, help_area] = vertical.areas(area);
 
     draw_title(f, app, title_area);
-    draw_target_temp(f, app, temp_area);
+    draw_temps(f, app, temp_area);
+    draw_gauge(f, app, gauge_area);
     draw_status(f, app, status_area);
     draw_help(f, app, help_area);
 }
@@ -68,7 +70,7 @@ fn draw_title(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(block, area);
 }
 
-fn draw_target_temp(f: &mut Frame, app: &App, area: Rect) {
+fn draw_temps(f: &mut Frame, app: &App, area: Rect) {
     let block = Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(rgb(42, 42, 42)));
@@ -76,32 +78,98 @@ fn draw_target_temp(f: &mut Frame, app: &App, area: Rect) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    let vertical = Layout::vertical([Constraint::Length(1), Constraint::Min(1)]);
-    let [label_area, value_area] = vertical.areas(inner);
+    let horizontal = Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]);
+    let [left, right] = horizontal.areas(inner);
 
-    let label = Paragraph::new("TARGET TEMPERATURE")
-        .style(Style::default().fg(rgb(85, 85, 85)))
-        .alignment(ratatui::layout::Alignment::Center);
-    f.render_widget(label, label_area);
+    // Left column: CURRENT
+    let left_layout = Layout::vertical([Constraint::Length(1), Constraint::Min(1)]);
+    let [left_label, left_value] = left_layout.areas(left);
 
-    let color = if app.state.heater_on {
-        rgb(232, 148, 58)
-    } else if app.state.setpoint_reached {
-        rgb(87, 201, 122)
-    } else {
-        rgb(245, 245, 245)
-    };
+    f.render_widget(
+        Paragraph::new("CURRENT")
+            .style(Style::default().fg(rgb(85, 85, 85)))
+            .alignment(ratatui::layout::Alignment::Center),
+        left_label,
+    );
 
-    let text = app
+    let current_color =
+        if let (Some(cur), Some(tgt)) = (app.state.current_temp, app.state.target_temp) {
+            if (cur - tgt).abs() <= 2.0 {
+                rgb(87, 201, 122)
+            } else if app.state.heater_on && cur < tgt {
+                rgb(232, 148, 58)
+            } else {
+                rgb(94, 155, 222)
+            }
+        } else {
+            rgb(85, 85, 85)
+        };
+
+    let current_text = app
         .state
-        .target_temp
-        .map(|t| format!("{t:.0}\u{b0}C"))
+        .current_temp
+        .map(|t| format!("{t:.1}\u{b0}C"))
         .unwrap_or_else(|| "---".into());
 
-    let value = Paragraph::new(text)
-        .style(Style::default().fg(color).add_modifier(Modifier::BOLD))
-        .alignment(ratatui::layout::Alignment::Center);
-    f.render_widget(value, value_area);
+    f.render_widget(
+        Paragraph::new(current_text)
+            .style(
+                Style::default()
+                    .fg(current_color)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .alignment(ratatui::layout::Alignment::Center),
+        left_value,
+    );
+
+    // Right column: TARGET
+    let right_layout = Layout::vertical([Constraint::Length(1), Constraint::Min(1)]);
+    let [right_label, right_value] = right_layout.areas(right);
+
+    f.render_widget(
+        Paragraph::new("TARGET")
+            .style(Style::default().fg(rgb(85, 85, 85)))
+            .alignment(ratatui::layout::Alignment::Center),
+        right_label,
+    );
+
+    let target_text = app
+        .state
+        .target_temp
+        .map(|t| format!("{t:.1}\u{b0}C"))
+        .unwrap_or_else(|| "---".into());
+
+    f.render_widget(
+        Paragraph::new(target_text)
+            .style(
+                Style::default()
+                    .fg(rgb(245, 245, 245))
+                    .add_modifier(Modifier::BOLD),
+            )
+            .alignment(ratatui::layout::Alignment::Center),
+        right_value,
+    );
+}
+
+fn draw_gauge(f: &mut Frame, app: &App, area: Rect) {
+    let ratio = match (app.state.current_temp, app.state.target_temp) {
+        (Some(cur), Some(tgt)) if tgt > 0.0 => (cur / tgt).clamp(0.0, 1.0) as f64,
+        _ => 0.0,
+    };
+
+    let pct = (ratio * 100.0) as u16;
+
+    let gauge = Gauge::default()
+        .block(
+            Block::bordered()
+                .border_type(BorderType::Rounded)
+                .border_style(Style::default().fg(rgb(42, 42, 42))),
+        )
+        .gauge_style(Style::default().fg(rgb(232, 148, 58)).bg(rgb(42, 42, 42)))
+        .ratio(ratio)
+        .label(format!("{pct}%"));
+
+    f.render_widget(gauge, area);
 }
 
 fn draw_status(f: &mut Frame, app: &App, area: Rect) {
@@ -168,7 +236,7 @@ fn draw_help(f: &mut Frame, app: &App, area: Rect) {
         ))
     } else {
         Line::from(Span::styled(
-            "  \u{2191}\u{2193} temp   H heater   P pump   S settings   Q quit",
+            "  \u{2191}\u{2193} temp   H heater   P pump   R refresh   S settings   Q quit",
             Style::default().fg(rgb(136, 136, 136)),
         ))
     };
