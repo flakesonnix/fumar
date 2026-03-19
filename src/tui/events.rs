@@ -10,7 +10,6 @@ use crate::tui::ui;
 pub async fn run(
     app: &mut App,
     terminal: &mut Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,
-    discord: bool,
 ) -> anyhow::Result<()> {
     let mut reader = crossterm::event::EventStream::new();
     let mut interval = tokio::time::interval(Duration::from_millis(500));
@@ -25,10 +24,12 @@ pub async fn run(
             }
             Some(state) = app.state_stream.next() => {
                 app.apply_state(state);
-                if discord {
+                #[cfg(feature = "discord")]
+                {
                     crate::discord::update(
                         &app.device.device_model().to_string(),
                         app.state.current_temp,
+                        app.state.target_temp,
                         app.state.heater_on,
                         app.device.device_model() == storz_rs::DeviceModel::VolcanoHybrid && app.state.pump_on,
                     );

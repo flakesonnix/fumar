@@ -7,7 +7,7 @@ use tracing::debug;
 
 use crate::args::Commands;
 
-pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands, discord: bool) -> Result<()> {
+pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()> {
     // Venty/Veazy send state via notifications. Wait briefly for first update
     // so cached state is populated before we read it.
     wait_for_state(device.as_ref()).await;
@@ -109,10 +109,12 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands, discord: bool
                 let heater = if state.heater_on { "ON" } else { "OFF" };
                 let pump = if state.pump_on { "ON" } else { "OFF" };
                 println!("[{now}]  {cur} / {tgt}  Heater: {heater}  Pump: {pump}");
-                if discord {
+                #[cfg(feature = "discord")]
+                {
                     crate::discord::update(
                         &device.device_model().to_string(),
                         state.current_temp,
+                        state.target_temp,
                         state.heater_on,
                         device.device_model() == storz_rs::DeviceModel::VolcanoHybrid
                             && state.pump_on,

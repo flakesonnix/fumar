@@ -7,7 +7,7 @@
 [![CI](https://github.com/flakesonnix/fumar/actions/workflows/ci.yml/badge.svg)](https://github.com/flakesonnix/fumar/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A TUI and CLI client for Storz & Bickel vaporizers, built on [storz-rs](https://github.com/flakesonnix/storz-rs). Supports live temperature monitoring, heater control, and pump control (Volcano only) over Bluetooth Low Energy.
+A TUI, CLI, and GUI client for Storz & Bickel vaporizers, built on [storz-rs](https://github.com/flakesonnix/storz-rs). Supports live temperature monitoring, heater control, and pump control (Volcano only) over Bluetooth Low Energy.
 
 ## Install
 
@@ -15,12 +15,24 @@ A TUI and CLI client for Storz & Bickel vaporizers, built on [storz-rs](https://
 cargo install fumar
 ```
 
-Or build from source:
+Or build from source with optional features:
 
 ```bash
 git clone https://github.com/flakesonnix/fumar
 cd fumar
+
+# Basic build (TUI + CLI)
 cargo build --release
+
+# With GTK4 GUI
+cargo build --release --features gui
+
+# With Discord Rich Presence
+cargo build --release --features discord
+
+# All features
+cargo build --release --features gui,discord
+
 ./target/release/fumar --help
 ```
 
@@ -52,6 +64,28 @@ fumar --cli pump-on       # Turn pump on (Volcano only)
 fumar --cli watch         # Stream live updates (Ctrl+C to stop)
 ```
 
+### GUI mode
+
+Requires the `gui` feature (GTK4):
+
+```bash
+fumar --gui
+```
+
+GTK4 GUI with temperature display, slider, heater/pump buttons, and BLE scan overlay.
+
+### Discord Rich Presence
+
+Requires the `discord` feature:
+
+```bash
+fumar --discord
+fumar --tui --discord
+fumar --gui --discord
+```
+
+Shows device model, current/target temperature, and heater/pump state in your Discord profile.
+
 ## TUI keybindings
 
 | Key | Action |
@@ -62,8 +96,10 @@ fumar --cli watch         # Stream live updates (Ctrl+C to stop)
 | `K` | Increase target +5°C |
 | `J` | Decrease target -5°C |
 | `h` / `H` | Toggle heater |
-| `p` / `P` | Toggle pump |
+| `p` / `P` | Toggle pump (Volcano only) |
 | `r` / `R` | Force state refresh |
+| `c` / `C` | Reconnect to device |
+| `s` / `S` | Toggle settings |
 
 ## Device support
 
@@ -81,14 +117,14 @@ BlueZ needs permission to start BLE scans.
 **Arch Linux** (no `bluetooth` group, use polkit):
 
 ```bash
-sudo tee /etc/polkit-1/rules.d/50-bluetooth.rules << 'EOF'
+sudo tee /etc/polkit-1/rules.d/50-bluetooth.rules << 'POLKIT'
 polkit.addRule(function(action, subject) {
     if (action.id === "org.bluez.Adapter.StartDiscovery" ||
         action.id === "org.bluez.Adapter.SetDiscoveryFilter") {
         return polkit.Result.YES;
     }
 });
-EOF
+POLKIT
 ```
 
 **Debian/Ubuntu/Fedora** (add yourself to the `bluetooth` group):

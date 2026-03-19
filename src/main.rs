@@ -1,5 +1,6 @@
 mod args;
 mod cli;
+#[cfg(feature = "discord")]
 mod discord;
 mod scanner;
 mod tui;
@@ -68,10 +69,12 @@ async fn main() -> Result<()> {
         init_tracing(true);
         #[cfg(feature = "gui")]
         {
+            #[cfg(feature = "discord")]
             if args.discord {
                 discord::init();
             }
-            gui::run_gui(args.discord);
+            gui::run_gui();
+            #[cfg(feature = "discord")]
             if args.discord {
                 discord::clear();
             }
@@ -90,6 +93,7 @@ async fn main() -> Result<()> {
     let timeout = Duration::from_secs(args.scan_timeout);
     let device = scanner::scan_and_select(timeout).await?;
 
+    #[cfg(feature = "discord")]
     if args.discord {
         discord::init();
     }
@@ -99,22 +103,26 @@ async fn main() -> Result<()> {
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         let mut app = App::new(device).await;
+        #[cfg(feature = "discord")]
         if args.discord {
             discord::update(
                 &app.device.device_model().to_string(),
                 app.state.current_temp,
+                app.state.target_temp,
                 app.state.heater_on,
                 app.device.device_model() == storz_rs::DeviceModel::VolcanoHybrid
                     && app.state.pump_on,
             );
         }
-        tui::events::run(&mut app, &mut terminal, args.discord).await?;
+        tui::events::run(&mut app, &mut terminal).await?;
+        #[cfg(feature = "discord")]
         if args.discord {
             discord::clear();
         }
     } else {
         let cmd = args.command.unwrap_or(Commands::Status);
-        cli::run(device, cmd, args.discord).await?;
+        cli::run(device, cmd).await?;
+        #[cfg(feature = "discord")]
         if args.discord {
             discord::clear();
         }

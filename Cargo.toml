@@ -15,9 +15,10 @@ path = "src/main.rs"
 [features]
 default = []
 gui = ["gtk4"]
+discord = ["discord-rich-presence"]
 
 [dependencies]
-discord-rich-presence = "1.1"
+discord-rich-presence = { version = "1.1", optional = true }
 storz-rs = "0.1"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }

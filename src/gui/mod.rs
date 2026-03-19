@@ -12,19 +12,19 @@ use tracing::{debug, info, warn};
 
 use app::{BleCommand, GuiApp};
 
-pub fn run_gui(discord: bool) {
+pub fn run_gui() {
     let app = Application::builder()
         .application_id("com.flakesonnix.fumar")
         .build();
 
-    app.connect_activate(move |app| {
-        activate(app, discord);
+    app.connect_activate(|app| {
+        activate(app);
     });
 
     app.run_with_args::<&str>(&[]);
 }
 
-fn activate(app: &Application, discord: bool) {
+fn activate(app: &Application) {
     let (cmd_tx, cmd_rx) = mpsc::unbounded::<BleCommand>();
     let (state_tx, state_rx) = mpsc::unbounded::<Option<DeviceState>>();
 
@@ -57,14 +57,18 @@ fn activate(app: &Application, discord: bool) {
         } else if updated {
             gui.update_ui();
         }
-        if updated && discord {
-            let is_volcano = gui.model == storz_rs::DeviceModel::VolcanoHybrid;
-            crate::discord::update(
-                &gui.model.to_string(),
-                gui.state.current_temp,
-                gui.state.heater_on,
-                is_volcano && gui.state.pump_on,
-            );
+        #[cfg(feature = "discord")]
+        {
+            if updated {
+                let is_volcano = gui.model == storz_rs::DeviceModel::VolcanoHybrid;
+                crate::discord::update(
+                    &gui.model.to_string(),
+                    gui.state.current_temp,
+                    gui.state.target_temp,
+                    gui.state.heater_on,
+                    is_volcano && gui.state.pump_on,
+                );
+            }
         }
 
         gui.tick += 1;

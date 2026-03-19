@@ -20,7 +20,7 @@ pub fn init() {
     }
 }
 
-pub fn update(model: &str, temp: Option<f32>, heater_on: bool, pump_on: bool) {
+pub fn update(model: &str, temp: Option<f32>, target: Option<f32>, heater_on: bool, pump_on: bool) {
     let mut guard = CLIENT.lock().unwrap();
     let Some(client) = guard.as_mut() else {
         return;
@@ -31,7 +31,12 @@ pub fn update(model: &str, temp: Option<f32>, heater_on: bool, pump_on: bool) {
         None => "---".into(),
     };
 
-    let details = format!("{model} \u{2022} {temp_str}");
+    let tgt_str = match target {
+        Some(t) => format!("{t:.1}\u{b0}C"),
+        None => "---".into(),
+    };
+
+    let details = format!("{model} \u{2022} {temp_str} \u{2192} {tgt_str}");
 
     let state = if pump_on {
         "Heater ON \u{2022} Pump ON".to_string()
@@ -41,7 +46,16 @@ pub fn update(model: &str, temp: Option<f32>, heater_on: bool, pump_on: bool) {
         "Idle".to_string()
     };
 
-    let activity = activity::Activity::new().details(&details).state(&state);
+    let assets = activity::Assets::new()
+        .large_image("fumar-large")
+        .large_text("fumar")
+        .small_image("fumar-small")
+        .small_text(if heater_on { "Heater ON" } else { "Idle" });
+
+    let activity = activity::Activity::new()
+        .details(&details)
+        .state(&state)
+        .assets(assets);
 
     if let Err(e) = client.set_activity(activity) {
         warn!("Discord RPC set_activity failed: {e}");
