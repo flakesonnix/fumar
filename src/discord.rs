@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
 use tracing::{debug, warn};
 
-const CLIENT_ID: &str = "1357539213497159801";
+const CLIENT_ID: &str = "1484204070758518927";
 
 static CLIENT: Mutex<Option<DiscordIpcClient>> = Mutex::new(None);
 
