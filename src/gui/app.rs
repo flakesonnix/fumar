@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::Instant;
 
@@ -33,6 +33,8 @@ pub struct GuiApp {
     temp_slider: Scale,
     heater_button: Button,
     pump_button: Option<Button>,
+    _handler_heater_on: Rc<Cell<bool>>,
+    _handler_pump_on: Rc<Cell<bool>>,
     model_label: Label,
     status_label: Label,
     error_label: Label,
@@ -199,6 +201,11 @@ impl GuiApp {
         window.set_child(Some(&overlay));
         let window_clone = window.clone();
 
+        // Shared state for signal handlers (avoid RefCell borrow in handlers)
+        let handler_cmd_tx = command_tx.clone();
+        let handler_heater_on: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+        let handler_pump_on: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+
         // --- Build Rc ---
         let gui = Rc::new(RefCell::new(Self {
             window: window_clone,
@@ -210,6 +217,8 @@ impl GuiApp {
             temp_slider: temp_slider.clone(),
             heater_button: heater_button.clone(),
             pump_button: pump_button.clone(),
+            _handler_heater_on: handler_heater_on.clone(),
+            _handler_pump_on: handler_pump_on.clone(),
             model_label,
             status_label,
             error_label,
@@ -224,37 +233,33 @@ impl GuiApp {
 
         // --- Signal handlers ---
         {
-            let gui = gui.clone();
+            let cmd_tx = handler_cmd_tx.clone();
             temp_slider.connect_value_changed(move |s| {
-                let g = gui.borrow();
-                let _ = g
-                    .command_tx
-                    .unbounded_send(BleCommand::SetTemp(s.value() as f32));
+                let _ = cmd_tx.unbounded_send(BleCommand::SetTemp(s.value() as f32));
             });
         }
         {
-            let gui = gui.clone();
+            let cmd_tx = handler_cmd_tx.clone();
+            let h = handler_heater_on.clone();
             heater_button.connect_clicked(move |_| {
-                let g = gui.borrow();
-                let cmd = if g.state.heater_on {
+                let on = h.get();
+                let _ = cmd_tx.unbounded_send(if on {
                     BleCommand::HeaterOff
                 } else {
                     BleCommand::HeaterOn
-                };
-                let _ = g.command_tx.unbounded_send(cmd);
+                });
             });
         }
         if let Some(ref btn) = pump_button {
-            let gui = gui.clone();
-            let btn = btn.clone();
+            let cmd_tx = handler_cmd_tx.clone();
+            let p = handler_pump_on.clone();
             btn.connect_clicked(move |_| {
-                let g = gui.borrow();
-                let cmd = if g.state.pump_on {
+                let on = p.get();
+                let _ = cmd_tx.unbounded_send(if on {
                     BleCommand::PumpOff
                 } else {
                     BleCommand::PumpOn
-                };
-                let _ = g.command_tx.unbounded_send(cmd);
+                });
             });
         }
 
@@ -312,6 +317,7 @@ impl GuiApp {
         }
 
         // Heater
+        self._handler_heater_on.set(state.heater_on);
         if state.heater_on {
             self.heater_button.set_label("Heater \u{25cf} ON");
             self.heater_button.remove_css_class("heater-off");
@@ -323,6 +329,7 @@ impl GuiApp {
         }
 
         // Pump
+        self._handler_pump_on.set(state.pump_on);
         if let Some(ref btn) = self.pump_button {
             if state.pump_on {
                 btn.set_label("Pump  \u{25cf} ON");

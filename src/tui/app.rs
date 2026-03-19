@@ -129,5 +129,4 @@ impl App {
     pub fn is_volcano(&self) -> bool {
         self.device.device_model() == DeviceModel::VolcanoHybrid
     }
-
 }
