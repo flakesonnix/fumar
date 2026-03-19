@@ -103,17 +103,6 @@ async fn main() -> Result<()> {
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         let mut app = App::new(device).await;
-        #[cfg(feature = "discord")]
-        if args.discord {
-            discord::update(
-                &app.device.device_model().to_string(),
-                app.state.current_temp,
-                app.state.target_temp,
-                app.state.heater_on,
-                app.device.device_model() == storz_rs::DeviceModel::VolcanoHybrid
-                    && app.state.pump_on,
-            );
-        }
         tui::events::run(&mut app, &mut terminal).await?;
         #[cfg(feature = "discord")]
         if args.discord {
