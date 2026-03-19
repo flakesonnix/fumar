@@ -12,19 +12,19 @@ use tracing::{debug, info, warn};
 
 use app::{BleCommand, GuiApp};
 
-pub fn run_gui() {
+pub fn run_gui(discord: bool) {
     let app = Application::builder()
         .application_id("com.flakesonnix.fumar")
         .build();
 
-    app.connect_activate(|app| {
-        activate(app);
+    app.connect_activate(move |app| {
+        activate(app, discord);
     });
 
     app.run_with_args::<&str>(&[]);
 }
 
-fn activate(app: &Application) {
+fn activate(app: &Application, discord: bool) {
     let (cmd_tx, cmd_rx) = mpsc::unbounded::<BleCommand>();
     let (state_tx, state_rx) = mpsc::unbounded::<Option<DeviceState>>();
 
@@ -56,6 +56,15 @@ fn activate(app: &Application) {
             gui.on_connected(Some(state));
         } else if updated {
             gui.update_ui();
+        }
+        if updated && discord {
+            let is_volcano = gui.model == storz_rs::DeviceModel::VolcanoHybrid;
+            crate::discord::update(
+                &gui.model.to_string(),
+                gui.state.current_temp,
+                gui.state.heater_on,
+                is_volcano && gui.state.pump_on,
+            );
         }
 
         gui.tick += 1;

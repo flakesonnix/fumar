@@ -126,6 +126,20 @@ impl App {
         }
     }
 
+    pub async fn reconnect(&mut self) {
+        match crate::scanner::scan_and_select(std::time::Duration::from_secs(10)).await {
+            Ok(device) => {
+                self.device = device;
+                match self.device.subscribe_state().await {
+                    Ok(stream) => self.state_stream = stream,
+                    Err(e) => self.set_error(format!("State subscribe failed: {e}")),
+                }
+                self.refresh_state().await;
+            }
+            Err(e) => self.set_error(format!("Reconnect failed: {e}")),
+        }
+    }
+
     pub fn is_volcano(&self) -> bool {
         self.device.device_model() == DeviceModel::VolcanoHybrid
     }

@@ -19,6 +19,10 @@ pub struct Cli {
     #[arg(long)]
     pub gui: bool,
 
+    /// Enable Discord Rich Presence
+    #[arg(long)]
+    pub discord: bool,
+
     /// BLE scan timeout in seconds
     #[arg(long, default_value = "10")]
     pub scan_timeout: u64,

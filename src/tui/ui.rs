@@ -230,12 +230,12 @@ fn draw_help(f: &mut Frame, app: &App, area: Rect) {
         ))
     } else if app.is_volcano() {
         Line::from(Span::styled(
-            "  \u{2191}\u{2193} temp   H heater   P pump   R refresh   S settings   Q quit",
+            "  \u{2191}\u{2193} temp   H heater   P pump   R refresh   C reconnect   S settings   Q quit",
             Style::default().fg(rgb(136, 136, 136)),
         ))
     } else {
         Line::from(Span::styled(
-            "  \u{2191}\u{2193} temp   H heater   R refresh   S settings   Q quit",
+            "  \u{2191}\u{2193} temp   H heater   R refresh   C reconnect   S settings   Q quit",
             Style::default().fg(rgb(136, 136, 136)),
         ))
     };

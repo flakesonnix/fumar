@@ -1,5 +1,6 @@
 mod args;
 mod cli;
+mod discord;
 mod scanner;
 mod tui;
 
@@ -67,7 +68,13 @@ async fn main() -> Result<()> {
         init_tracing(true);
         #[cfg(feature = "gui")]
         {
-            gui::run_gui();
+            if args.discord {
+                discord::init();
+            }
+            gui::run_gui(args.discord);
+            if args.discord {
+                discord::clear();
+            }
             return Ok(());
         }
         #[cfg(not(feature = "gui"))]
@@ -83,15 +90,34 @@ async fn main() -> Result<()> {
     let timeout = Duration::from_secs(args.scan_timeout);
     let device = scanner::scan_and_select(timeout).await?;
 
+    if args.discord {
+        discord::init();
+    }
+
     if tui_mode {
         let _guard = TerminalGuard::new()?;
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         let mut app = App::new(device).await;
-        tui::events::run(&mut app, &mut terminal).await?;
+        if args.discord {
+            discord::update(
+                &app.device.device_model().to_string(),
+                app.state.current_temp,
+                app.state.heater_on,
+                app.device.device_model() == storz_rs::DeviceModel::VolcanoHybrid
+                    && app.state.pump_on,
+            );
+        }
+        tui::events::run(&mut app, &mut terminal, args.discord).await?;
+        if args.discord {
+            discord::clear();
+        }
     } else {
         let cmd = args.command.unwrap_or(Commands::Status);
-        cli::run(device, cmd).await?;
+        cli::run(device, cmd, args.discord).await?;
+        if args.discord {
+            discord::clear();
+        }
     }
 
     Ok(())
