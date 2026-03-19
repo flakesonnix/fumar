@@ -48,31 +48,41 @@ async fn handle_event(app: &mut App, event: Event) {
 
 async fn handle_key(app: &mut App, key: KeyEvent) {
     match key.code {
-        KeyCode::Char('q') | KeyCode::Esc => {
+        KeyCode::Esc => {
+            if app.show_settings {
+                app.show_settings = false;
+            } else {
+                app.should_quit = true;
+            }
+        }
+        KeyCode::Char('q') => {
             app.should_quit = true;
         }
         KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             app.should_quit = true;
         }
-        KeyCode::Up | KeyCode::Char('k') => {
+        KeyCode::Char('s') | KeyCode::Char('S') => {
+            app.show_settings = !app.show_settings;
+        }
+        KeyCode::Up | KeyCode::Char('k') if !app.show_settings => {
             app.adjust_target(1.0).await;
         }
-        KeyCode::Down | KeyCode::Char('j') => {
+        KeyCode::Down | KeyCode::Char('j') if !app.show_settings => {
             app.adjust_target(-1.0).await;
         }
-        KeyCode::Char('K') => {
+        KeyCode::Char('K') if !app.show_settings => {
             app.adjust_target(5.0).await;
         }
-        KeyCode::Char('J') => {
+        KeyCode::Char('J') if !app.show_settings => {
             app.adjust_target(-5.0).await;
         }
-        KeyCode::Char('h') | KeyCode::Char('H') => {
+        KeyCode::Char('h') | KeyCode::Char('H') if !app.show_settings => {
             app.toggle_heater().await;
         }
-        KeyCode::Char('p') | KeyCode::Char('P') => {
+        KeyCode::Char('p') | KeyCode::Char('P') if !app.show_settings => {
             app.toggle_pump().await;
         }
-        KeyCode::Char('r') | KeyCode::Char('R') => {
+        KeyCode::Char('r') | KeyCode::Char('R') if !app.show_settings => {
             app.refresh_state().await;
         }
         _ => {}

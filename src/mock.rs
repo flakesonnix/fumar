@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use futures::Stream;
 use futures::StreamExt;
 use storz_rs::{DeviceModel, DeviceState, StorzError, VaporizerControl};
-use tokio::sync::{broadcast, Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::wrappers::BroadcastStream;
 
 /// Mock Venty emulator for testing without BLE hardware.
@@ -70,14 +70,12 @@ impl MockVenty {
 
                 if let Some(cur) = s.current_temp {
                     let new_temp = if is_heating {
-                        // Rise toward target: faster when further away
                         let diff = tgt - cur;
-                        let step = (diff * 0.05).clamp(0.5, 5.0);
+                        let step = (diff * 0.02).clamp(0.3, 2.0);
                         (cur + step).min(tgt)
                     } else {
-                        // Cool toward ambient (20°C)
                         let diff = cur - 20.0;
-                        let step = (diff * 0.03).clamp(0.2, 3.0);
+                        let step = (diff * 0.01).clamp(0.1, 1.0);
                         (cur - step).max(20.0)
                     };
                     s.current_temp = Some(new_temp);
@@ -101,9 +99,9 @@ impl VaporizerControl for MockVenty {
 
     async fn get_target_temperature(&self) -> Result<f32, StorzError> {
         let state = self.state.lock().await;
-        state
-            .target_temp
-            .ok_or(StorzError::ParseError("Target temperature not available".into()))
+        state.target_temp.ok_or(StorzError::ParseError(
+            "Target temperature not available".into(),
+        ))
     }
 
     async fn set_target_temperature(&self, celsius: f32) -> Result<(), StorzError> {

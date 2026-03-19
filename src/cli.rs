@@ -9,12 +9,8 @@ use crate::args::Commands;
 pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()> {
     match cmd {
         Commands::Temp => {
-            let current = match timeout_ble(device.get_current_temperature()).await {
-                Ok(t) => format!("{t:.1}°C"),
-                Err(_) => "N/A".into(),
-            };
             let target = timeout_ble(device.get_target_temperature()).await?;
-            println!("Current: {current}  Target: {target:.1}°C");
+            println!("Target: {target:.0}°C");
         }
         Commands::SetTemp { celsius } => {
             let rounded = (celsius / 2.0).round() * 2.0;
@@ -59,14 +55,20 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
             let state = timeout_ble(device.get_state())
                 .await
                 .context("Failed to get state")?;
-            let json = serde_json::json!({
+            let mut json = serde_json::json!({
                 "device": device.device_model().to_string(),
-                "current_temp": state.current_temp,
                 "target_temp": state.target_temp,
                 "heater": state.heater_on,
+                "setpoint_reached": state.setpoint_reached,
                 "pump": state.pump_on,
                 "fan": state.fan_on,
             });
+            if let Some(ref s) = state.settings {
+                json["battery"] = serde_json::json!(s.battery_level);
+                json["charging"] = serde_json::json!(s.is_charging);
+                json["unit"] = serde_json::json!(if s.is_celsius { "C" } else { "F" });
+                json["auto_off_seconds"] = serde_json::json!(s.auto_shutdown_seconds);
+            }
             println!("{}", serde_json::to_string_pretty(&json)?);
         }
         Commands::Watch => {
@@ -77,17 +79,13 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
             let mut count = 0u32;
             while let Some(state) = stream.next().await {
                 let now = chrono_now();
-                let cur = state
-                    .current_temp
-                    .map(|t| format!("{t:.1}°C"))
-                    .unwrap_or_else(|| "---".into());
                 let tgt = state
                     .target_temp
-                    .map(|t| format!("{t:.1}°C"))
+                    .map(|t| format!("{t:.0}\u{b0}C"))
                     .unwrap_or_else(|| "---".into());
                 let heater = if state.heater_on { "ON" } else { "OFF" };
-                let pump = if state.pump_on { "ON" } else { "OFF" };
-                println!("[{now}]  {cur} / {tgt}  Heater: {heater}  Pump: {pump}");
+                let reached = if state.setpoint_reached { " ✓" } else { "" };
+                println!("[{now}]  {tgt}  Heater: {heater}{reached}");
                 count += 1;
                 if count >= 200 {
                     break;
