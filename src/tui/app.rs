@@ -41,7 +41,8 @@ impl App {
     }
 
     pub async fn adjust_target(&mut self, delta: f32) {
-        let new_temp = (self.state.target_temp.unwrap_or(185.0) + delta).clamp(40.0, 230.0);
+        let raw = (self.state.target_temp.unwrap_or(180.0) + delta).clamp(40.0, 230.0);
+        let new_temp = (raw / 2.0).round() * 2.0;
         match tokio::time::timeout(
             Duration::from_secs(5),
             self.device.set_target_temperature(new_temp),

@@ -17,10 +17,11 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
             println!("Current: {current}  Target: {target:.1}°C");
         }
         Commands::SetTemp { celsius } => {
-            timeout_ble(device.set_target_temperature(celsius))
+            let rounded = (celsius / 2.0).round() * 2.0;
+            timeout_ble(device.set_target_temperature(rounded))
                 .await
                 .context("Failed to set temperature")?;
-            println!("Target set to {celsius:.1}°C");
+            println!("Target set to {rounded:.0}°C");
         }
         Commands::HeatOn => {
             timeout_ble(device.heater_on())
