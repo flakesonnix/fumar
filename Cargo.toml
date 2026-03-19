@@ -13,7 +13,7 @@ name = "fumar"
 path = "src/main.rs"
 
 [dependencies]
-storz-rs = { path = "../storz-rs" }
+storz-rs = "0.1"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }
 ratatui = "0.26"
