@@ -1,7 +1,7 @@
 use std::io::IsTerminal;
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use btleplug::api::Peripheral as _;
 use storz_rs::VaporizerControl;
 use tracing::{info, warn};

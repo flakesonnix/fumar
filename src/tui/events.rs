@@ -37,10 +37,10 @@ pub async fn run(
 }
 
 async fn handle_event(app: &mut App, event: Event) {
-    if let Event::Key(key) = event {
-        if key.kind == KeyEventKind::Press {
-            handle_key(app, key).await;
-        }
+    if let Event::Key(key) = event
+        && key.kind == KeyEventKind::Press
+    {
+        handle_key(app, key).await;
     }
 }
 

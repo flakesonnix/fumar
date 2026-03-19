@@ -100,11 +100,11 @@ impl App {
     }
 
     pub fn tick_errors(&mut self) {
-        if let Some(clear_at) = self.error_clear_at {
-            if Instant::now() >= clear_at {
-                self.last_error = None;
-                self.error_clear_at = None;
-            }
+        if let Some(clear_at) = self.error_clear_at
+            && Instant::now() >= clear_at
+        {
+            self.last_error = None;
+            self.error_clear_at = None;
         }
     }
 
