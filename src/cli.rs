@@ -91,6 +91,25 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
             }
             println!("{}", serde_json::to_string_pretty(&json)?);
         }
+        Commands::Battery => {
+            let level = timeout_ble(device.get_battery_level())
+                .await
+                .context("Failed to get battery level")?;
+            let charging = timeout_ble(device.get_is_charging())
+                .await
+                .context("Failed to get charging status")?;
+            match level {
+                Some(pct) => {
+                    let status = if charging == Some(true) {
+                        "charging"
+                    } else {
+                        "discharging"
+                    };
+                    println!("{pct}% ({status})");
+                }
+                None => println!("Battery level not available"),
+            }
+        }
         Commands::Watch => {
             let mut stream = device
                 .subscribe_state()

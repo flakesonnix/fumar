@@ -47,6 +47,8 @@ pub enum Commands {
     PumpOff,
     /// Show device status as JSON
     Status,
+    /// Show battery level
+    Battery,
     /// Stream live state updates
     Watch,
 }
