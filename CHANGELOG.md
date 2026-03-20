@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.2] - 2026-03-20
+### Fixed
+- Discord Rich Presence: fix asset image names to match Discord developer portal
+
 ## [0.1.0] - 2026-03-19
 ### Added
 - TUI mode with live temperature display, gauge, and keyboard controls

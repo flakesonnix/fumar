@@ -1,6 +1,6 @@
 [package]
 name = "fumar"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 description = "TUI, CLI, and GUI client for Storz & Bickel vaporizers"
 license = "MIT"

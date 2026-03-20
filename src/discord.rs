@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
+use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use tracing::{debug, warn};
 
 const CLIENT_ID: &str = "1484204070758518927";
@@ -62,9 +62,9 @@ pub fn update(
     let state = state_parts.join(" \u{2022} ");
 
     let assets = activity::Assets::new()
-        .large_image("fumar-large")
+        .large_image("discord-large")
         .large_text("fumar")
-        .small_image("fumar-small")
+        .small_image("discord-small")
         .small_text(if heater_on { "Heater ON" } else { "Idle" });
 
     let activity = activity::Activity::new()
