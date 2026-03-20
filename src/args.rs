@@ -49,6 +49,8 @@ pub enum Commands {
     Status,
     /// Show battery level
     Battery,
+    /// Show config file path and contents
+    Config,
     /// Stream live state updates
     Watch,
 }

@@ -145,6 +145,9 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                 }
             }
         }
+        Commands::Config => {
+            // Handled in main.rs before reaching cli::run
+        }
     }
     Ok(())
 }

@@ -89,6 +89,19 @@ async fn main() -> Result<()> {
         &cfg.mode
     };
 
+    // Handle config command before BLE connection
+    if matches!(args.command, Some(Commands::Config)) {
+        let path = Config::config_path()?;
+        eprintln!("Config file: {}\n", path.display());
+        if path.exists() {
+            let content = std::fs::read_to_string(&path)?;
+            println!("{content}");
+        } else {
+            eprintln!("(not yet created — run fumar to set up)");
+        }
+        return Ok(());
+    }
+
     if mode == "gui" {
         init_tracing(true);
         #[cfg(feature = "gui")]
