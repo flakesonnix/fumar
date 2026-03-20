@@ -123,8 +123,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    let tui_mode = mode == "tui"
-        || (mode != "cli" && args.command.is_none() && stdout_is_tty());
+    let tui_mode = mode == "tui" || (mode != "cli" && args.command.is_none() && stdout_is_tty());
 
     init_tracing(false);
 

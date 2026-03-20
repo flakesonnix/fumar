@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
+use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
 use tracing::{debug, warn};
 
 const CLIENT_ID: &str = "1484204070758518927";

@@ -125,33 +125,38 @@ impl Config {
 
         // Parse "mode" node
         if let Some(node) = doc.get("mode")
-            && let Some(val) = node.get(0).and_then(|v| v.as_string()) {
-                config.mode = val.to_string();
-            }
+            && let Some(val) = node.get(0).and_then(|v| v.as_string())
+        {
+            config.mode = val.to_string();
+        }
 
         // Parse "discord" node
         if let Some(node) = doc.get("discord")
-            && let Some(val) = node.get(0).and_then(|v| v.as_bool()) {
-                config.discord = val;
-            }
+            && let Some(val) = node.get(0).and_then(|v| v.as_bool())
+        {
+            config.discord = val;
+        }
 
         // Parse "scan_timeout" node
         if let Some(node) = doc.get("scan_timeout")
-            && let Some(val) = node.get(0).and_then(|v| v.as_integer()) {
-                config.scan_timeout = val.clamp(1, 120) as u64;
-            }
+            && let Some(val) = node.get(0).and_then(|v| v.as_integer())
+        {
+            config.scan_timeout = val.clamp(1, 120) as u64;
+        }
 
         // Parse "default_temp" node
         if let Some(node) = doc.get("default_temp")
-            && let Some(val) = node.get(0).and_then(|v| v.as_float()) {
-                config.default_temp = (val as f32).clamp(40.0, 230.0);
-            }
+            && let Some(val) = node.get(0).and_then(|v| v.as_float())
+        {
+            config.default_temp = (val as f32).clamp(40.0, 230.0);
+        }
 
         // Parse "auto_connect" node
         if let Some(node) = doc.get("auto_connect")
-            && let Some(val) = node.get(0).and_then(|v| v.as_bool()) {
-                config.auto_connect = val;
-            }
+            && let Some(val) = node.get(0).and_then(|v| v.as_bool())
+        {
+            config.auto_connect = val;
+        }
 
         debug!("Loaded config: {config:?}");
         Ok(config)
