@@ -10,6 +10,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --check
+
   check:
     name: ${{ matrix.os }} / ${{ matrix.toolchain }}
     runs-on: ${{ matrix.os }}
@@ -25,7 +35,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-      - run: cargo fmt --check
-      - run: cargo clippy -- -D warnings
-      - run: cargo build --release
-      - run: cargo test
+          components: rustfmt
+      - run: cargo clippy --no-default-features --features discord -- -D warnings
+      - run: cargo build --release --no-default-features --features discord
+      - run: cargo test --no-default-features --features discord
+
+  check-gui:
+    name: GUI (Linux only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config libgtk-4-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo clippy --features gui -- -D warnings
+      - run: cargo build --release --features gui
