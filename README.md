@@ -1,5 +1,9 @@
 # fumar
 
+<p align="center">
+  <img src="assets/logo.png" alt="fumar logo" width="300">
+</p>
+
 **Control your Storz & Bickel vaporizer from the terminal.**
 
 [![crates.io](https://img.shields.io/crates/v/fumar)](https://crates.io/crates/fumar)
@@ -85,6 +89,10 @@ fumar --gui --discord
 ```
 
 Shows device model, current/target temperature, and heater/pump state in your Discord profile.
+
+<p align="center">
+  <img src="assets/discord-large.png" alt="Discord Rich Presence" width="400">
+</p>
 
 ## TUI keybindings
 
