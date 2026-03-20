@@ -1,9 +1,9 @@
 use ratatui::{
-    Frame,
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Gauge, Paragraph},
+    Frame,
 };
 
 use crate::tui::app::App;
@@ -50,6 +50,21 @@ fn draw_title(f: &mut Frame, app: &App, area: Rect) {
         _ => "\u{b7}\u{b7}\u{b7}",
     };
 
+    let battery_str = app
+        .state
+        .settings
+        .as_ref()
+        .and_then(|s| s.battery_level)
+        .map(|pct| {
+            let icon = if app.state.settings.as_ref().is_some_and(|s| s.is_charging) {
+                "\u{1f50b}"
+            } else {
+                "\u{1faab}"
+            };
+            format!("{icon} {pct}%")
+        })
+        .unwrap_or_default();
+
     let line = Line::from(vec![
         Span::styled(
             " fumar ",
@@ -61,6 +76,8 @@ fn draw_title(f: &mut Frame, app: &App, area: Rect) {
         Span::styled(model, Style::default().fg(rgb(245, 245, 245))),
         Span::raw(" "),
         Span::styled(dots, Style::default().fg(rgb(136, 136, 136))),
+        Span::raw("  "),
+        Span::styled(battery_str, Style::default().fg(rgb(136, 136, 136))),
     ]);
 
     let block = Block::bordered()
