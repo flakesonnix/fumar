@@ -62,7 +62,7 @@ fn activate(app: &Application) {
             if updated {
                 let is_volcano = gui.model == storz_rs::DeviceModel::VolcanoHybrid;
                 let battery = gui.state.settings.as_ref().and_then(|s| s.battery_level);
-                let charging = gui.state.settings.as_ref().map_or(false, |s| s.is_charging);
+                let charging = gui.state.settings.as_ref().is_some_and(|s| s.is_charging);
                 crate::discord::update(
                     &gui.model.to_string(),
                     gui.state.current_temp,

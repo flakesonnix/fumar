@@ -13,12 +13,13 @@ name = "fumar"
 path = "src/main.rs"
 
 [features]
-default = []
+default = ["gui", "discord"]
 gui = ["gtk4"]
 discord = ["discord-rich-presence"]
 
 [dependencies]
 discord-rich-presence = { version = "1.1", optional = true }
+kdl = "6.5"
 storz-rs = "0.2.1"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }

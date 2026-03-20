@@ -1,5 +1,6 @@
 mod args;
 mod cli;
+mod config;
 #[cfg(feature = "discord")]
 mod discord;
 mod scanner;
@@ -18,8 +19,10 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
+use tracing::debug;
 
 use args::{Cli, Commands};
+use config::Config;
 use tui::app::App;
 
 struct TerminalGuard;
@@ -64,18 +67,39 @@ fn stdout_is_tty() -> bool {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::parse();
+    let cfg = Config::load().unwrap_or_else(|e| {
+        debug!("Failed to load config: {e}, using defaults");
+        Config::default()
+    });
 
-    if args.gui {
+    // Determine effective values: CLI flags override config
+    let use_discord = args.discord || cfg.discord;
+    let scan_timeout = if args.scan_timeout != 10 {
+        args.scan_timeout
+    } else {
+        cfg.scan_timeout
+    };
+    let mode = if args.gui {
+        "gui"
+    } else if args.tui {
+        "tui"
+    } else if args.cli {
+        "cli"
+    } else {
+        &cfg.mode
+    };
+
+    if mode == "gui" {
         init_tracing(true);
         #[cfg(feature = "gui")]
         {
             #[cfg(feature = "discord")]
-            if args.discord {
+            if use_discord {
                 discord::init();
             }
             gui::run_gui();
             #[cfg(feature = "discord")]
-            if args.discord {
+            if use_discord {
                 discord::clear();
             }
             return Ok(());
@@ -86,15 +110,16 @@ async fn main() -> Result<()> {
         }
     }
 
-    let tui_mode = args.tui || (!args.cli && args.command.is_none() && stdout_is_tty());
+    let tui_mode = mode == "tui"
+        || (mode != "cli" && args.command.is_none() && stdout_is_tty());
 
     init_tracing(false);
 
-    let timeout = Duration::from_secs(args.scan_timeout);
+    let timeout = Duration::from_secs(scan_timeout);
     let device = scanner::scan_and_select(timeout).await?;
 
     #[cfg(feature = "discord")]
-    if args.discord {
+    if use_discord {
         discord::init();
     }
 
@@ -105,14 +130,14 @@ async fn main() -> Result<()> {
         let mut app = App::new(device).await;
         tui::events::run(&mut app, &mut terminal).await?;
         #[cfg(feature = "discord")]
-        if args.discord {
+        if use_discord {
             discord::clear();
         }
     } else {
         let cmd = args.command.unwrap_or(Commands::Status);
         cli::run(device, cmd).await?;
         #[cfg(feature = "discord")]
-        if args.discord {
+        if use_discord {
             discord::clear();
         }
     }
