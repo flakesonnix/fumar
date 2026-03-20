@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use discord_rich_presence::{DiscordIpc, DiscordIpcClient, activity};
+use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use tracing::{debug, warn};
 
 const CLIENT_ID: &str = "1484204070758518927";
@@ -20,7 +20,15 @@ pub fn init() {
     }
 }
 
-pub fn update(model: &str, temp: Option<f32>, target: Option<f32>, heater_on: bool, pump_on: bool) {
+pub fn update(
+    model: &str,
+    temp: Option<f32>,
+    target: Option<f32>,
+    heater_on: bool,
+    pump_on: bool,
+    battery: Option<u8>,
+    charging: bool,
+) {
     let mut guard = CLIENT.lock().unwrap();
     let Some(client) = guard.as_mut() else {
         return;
@@ -38,13 +46,20 @@ pub fn update(model: &str, temp: Option<f32>, target: Option<f32>, heater_on: bo
 
     let details = format!("{model} \u{2022} {temp_str} \u{2192} {tgt_str}");
 
-    let state = if pump_on {
-        "Heater ON \u{2022} Pump ON".to_string()
-    } else if heater_on {
-        "Heater ON".to_string()
+    let mut state_parts = Vec::new();
+    if heater_on {
+        state_parts.push("Heater ON".to_string());
     } else {
-        "Idle".to_string()
-    };
+        state_parts.push("Idle".to_string());
+    }
+    if pump_on {
+        state_parts.push("Pump ON".to_string());
+    }
+    if let Some(pct) = battery {
+        let icon = if charging { "\u{1f50c}" } else { "\u{1faab}" };
+        state_parts.push(format!("{icon} {pct}%"));
+    }
+    let state = state_parts.join(" \u{2022} ");
 
     let assets = activity::Assets::new()
         .large_image("fumar-large")

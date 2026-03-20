@@ -111,6 +111,8 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                 println!("[{now}]  {cur} / {tgt}  Heater: {heater}  Pump: {pump}");
                 #[cfg(feature = "discord")]
                 {
+                    let battery = state.settings.as_ref().and_then(|s| s.battery_level);
+                    let charging = state.settings.as_ref().is_some_and(|s| s.is_charging);
                     crate::discord::update(
                         &device.device_model().to_string(),
                         state.current_temp,
@@ -118,6 +120,8 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                         state.heater_on,
                         device.device_model() == storz_rs::DeviceModel::VolcanoHybrid
                             && state.pump_on,
+                        battery,
+                        charging,
                     );
                 }
             }

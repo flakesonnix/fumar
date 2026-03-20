@@ -35,9 +35,8 @@ pub async fn scan_and_select(timeout: Duration) -> Result<Box<dyn VaporizerContr
     };
 
     info!("Connecting to device...");
-    let device = tokio::time::timeout(Duration::from_secs(15), storz_rs::connect(peripheral))
+    let device = storz_rs::connect_with_timeout(peripheral, Duration::from_secs(15))
         .await
-        .context("Connection timed out")?
         .context("Failed to connect")?;
 
     info!("Connected to {}", device.device_model());

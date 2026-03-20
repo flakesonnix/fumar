@@ -26,12 +26,16 @@ pub async fn run(
                 app.apply_state(state);
                 #[cfg(feature = "discord")]
                 {
+                    let battery = app.state.settings.as_ref().and_then(|s| s.battery_level);
+                    let charging = app.state.settings.as_ref().is_some_and(|s| s.is_charging);
                     crate::discord::update(
                         &app.device.device_model().to_string(),
                         app.state.current_temp,
                         app.state.target_temp,
                         app.state.heater_on,
                         app.device.device_model() == storz_rs::DeviceModel::VolcanoHybrid && app.state.pump_on,
+                        battery,
+                        charging,
                     );
                 }
             }
