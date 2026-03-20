@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["init_tracing","main","stdout_is_tty"],"mod":["args","cli","config","discord","gui","scanner","tui"],"struct":["TerminalGuard"]};

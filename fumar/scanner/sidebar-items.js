@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["scan_and_select","select_interactive"]};

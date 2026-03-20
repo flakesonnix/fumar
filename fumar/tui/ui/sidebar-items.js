@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["draw","draw_gauge","draw_help","draw_settings","draw_status","draw_temps","draw_title","rgb"]};

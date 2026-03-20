@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["activate","ble_thread","run_gui"],"mod":["app","style"]};

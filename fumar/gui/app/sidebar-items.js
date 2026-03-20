@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BleCommand"],"fn":["format_temp","temp_color_class"],"struct":["GuiApp"]};

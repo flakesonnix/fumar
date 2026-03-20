@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLIENT_ID"],"fn":["clear","init","update"],"static":["CLIENT"]};

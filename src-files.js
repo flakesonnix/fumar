@@ -1,0 +1,2 @@
+createSrcSidebar('[["fumar",["",[["gui",[],["app.rs","mod.rs","style.rs"]],["tui",[],["app.rs","events.rs","mod.rs","ui.rs"]]],["args.rs","cli.rs","config.rs","discord.rs","main.rs","scanner.rs"]]]]');
+//{"start":19,"fragment_lengths":[178]}

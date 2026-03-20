@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["dirs_fallback","read_line"],"struct":["Config"]};
