@@ -78,7 +78,10 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                 "device": device.device_model().to_string(),
                 "current_temp": state.current_temp,
                 "target_temp": state.target_temp,
+                "boost_temp": state.boost_temp,
+                "super_boost_temp": state.super_boost_temp,
                 "heater": state.heater_on,
+                "heater_mode": state.heater_mode.map(|m| m.to_string()),
                 "setpoint_reached": state.setpoint_reached,
                 "pump": state.pump_on,
                 "fan": state.fan_on,
@@ -88,6 +91,9 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                 json["charging"] = serde_json::json!(s.is_charging);
                 json["unit"] = serde_json::json!(if s.is_celsius { "C" } else { "F" });
                 json["auto_off_seconds"] = serde_json::json!(s.auto_shutdown_seconds);
+                json["vibration"] = serde_json::json!(s.vibration);
+                json["boost_visualization"] = serde_json::json!(s.boost_visualization);
+                json["permanent_bluetooth"] = serde_json::json!(s.permanent_bluetooth);
             }
             println!("{}", serde_json::to_string_pretty(&json)?);
         }
