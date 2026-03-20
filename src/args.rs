@@ -51,6 +51,10 @@ pub enum Commands {
     Battery,
     /// Show config file path and contents
     Config,
+    /// Vibrate device to locate it
+    Find,
+    /// Factory reset device
+    FactoryReset,
     /// Stream live state updates
     Watch,
 }

@@ -145,6 +145,37 @@ pub async fn run(device: Box<dyn VaporizerControl>, cmd: Commands) -> Result<()>
                 }
             }
         }
+        Commands::Find => match timeout_ble(device.find_my_device()).await {
+            Ok(_) => println!("Device vibrating..."),
+            Err(e) => {
+                if is_unsupported(&e) {
+                    eprintln!("Not supported on {}", device.device_model());
+                    std::process::exit(2);
+                }
+                return Err(e);
+            }
+        },
+        Commands::FactoryReset => {
+            eprint!("Are you sure? This will erase all settings [y/N]: ");
+            use std::io::Write;
+            std::io::stderr().flush().ok();
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input)?;
+            if input.trim().to_lowercase().starts_with('y') {
+                match timeout_ble(device.factory_reset()).await {
+                    Ok(_) => println!("Factory reset complete"),
+                    Err(e) => {
+                        if is_unsupported(&e) {
+                            eprintln!("Not supported on {}", device.device_model());
+                            std::process::exit(2);
+                        }
+                        return Err(e);
+                    }
+                }
+            } else {
+                println!("Cancelled");
+            }
+        }
         Commands::Config => {
             // Handled in main.rs before reaching cli::run
         }
